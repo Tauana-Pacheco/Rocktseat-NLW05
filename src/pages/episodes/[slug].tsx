@@ -1,4 +1,4 @@
-import { GetStaticProps, GetStaticPaths } from 'next';
+import next, { GetStaticProps, GetStaticPaths } from 'next';
 import { format, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR'; 
 import {convertDurationToTimeStrings} from '../../utils/convertDurationToTimeStrings';
@@ -25,6 +25,7 @@ type EpisodeProps = {
 }
 
 export default function Episode({ episode }: EpisodeProps) { 
+  
     return (
         <div className={styles.episode}>
             <div className={styles.thumbnailContainer}>
@@ -57,15 +58,34 @@ export default function Episode({ episode }: EpisodeProps) {
               dangerouslySetInnerHTML={{__html: episode.description}}
             />
         </div>
-      
     )
 }
 
+// client (browser) - next.js - server (back-end) 
+// fallback "blocking/true" - incremental static regeneration
+
 export const getStaticPaths: GetStaticPaths = async () => {
-    return {
-        paths: [],
+    const { data } = await api.get('/episodes', {
+      params: {
+        _limit: 2,
+        _sort: 'published_at',
+        _order: 'desc' 
+      }
+    })
+
+    const paths = data.map(episode => {
+        return {
+            params: {
+                slug: episode.id,
+            }
+        }
+    })
+
+    return { 
+        paths,
         fallback: 'blocking'
     }
+
 }
 
 export const getStaticProps: GetStaticProps = async (ctx) => {
